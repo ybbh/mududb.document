@@ -22,8 +22,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TARGET_REPOSITORY: mududb/docs
+  TARGET_REPOSITORY: mududb/mududb.github.io
   TARGET_MAIN_BRANCH: main
+  TARGET_DOCS_DIR: docs
 
 jobs:
   build:
@@ -53,7 +54,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish generated HTML to mududb/docs
+    name: Publish generated HTML to mududb.github.io/docs
     needs: build
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'publish' }}
@@ -90,11 +91,9 @@ jobs:
             cd ..
           fi
 
-          find publish-repo -mindepth 1 \
-            ! -path "publish-repo/.git" \
-            ! -path "publish-repo/.git/*" \
-            -exec rm -rf {} +
-          cp -a build/html/. publish-repo/
+          rm -rf "publish-repo/${TARGET_DOCS_DIR}"
+          mkdir -p "publish-repo/${TARGET_DOCS_DIR}"
+          cp -a build/html/. "publish-repo/${TARGET_DOCS_DIR}/"
           touch publish-repo/.nojekyll
 
           cd publish-repo

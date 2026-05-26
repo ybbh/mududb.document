@@ -147,13 +147,13 @@ Update `source/versions/versions.json` when adding or retiring maintained versio
 
 The workflow at `.github/workflows/docs.yml` builds the final static HTML and publishes only generated artifacts.
 
-The workflow publishes generated HTML to `https://github.com/mududb/docs`.
+The workflow publishes generated HTML to the `docs` directory in `https://github.com/mududb/mududb.github.io`.
 
 Configure these repository variables/secrets in the documentation repository:
 
-- Secret `PAGES_DEPLOY_TOKEN`: GitHub token with write access to `mududb/docs`.
+- Secret `PAGES_DEPLOY_TOKEN`: GitHub token with write access to `mududb/mududb.github.io`.
 
-The workflow publishes `build/html` into the root of `mududb/docs`. Source files from this repository are not published.
+The workflow publishes `build/html` into `docs/` in `mududb/mududb.github.io`. Source files from this repository are not published.
 Publishing is manual: run the workflow with `command=publish`. Pushes to `main` run the build job only.
 
 ## Manual Release Checklist
