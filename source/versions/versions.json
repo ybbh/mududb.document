@@ -1,0 +1,9 @@
+{
+  "default_version": "v0.1",
+  "default_language": "zh_CN",
+  "versions": ["v0.1"],
+  "languages": {
+    "en": "English",
+    "zh_CN": "简体中文"
+  }
+}
