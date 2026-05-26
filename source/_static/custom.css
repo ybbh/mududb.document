@@ -233,3 +233,44 @@
 .mududb-quickstart .highlight {
   margin-bottom: 0;
 }
+
+html[data-theme="dark"],
+html[data-mode="dark"] {
+  --mududb-ink: #f3f7fa;
+  --mududb-muted: #c6d1d8;
+  --mududb-border: #40535e;
+  --mududb-panel: #17242b;
+  --mududb-soft: #20323b;
+}
+
+html[data-theme="dark"] .bd-article h1,
+html[data-theme="dark"] .bd-article h2,
+html[data-theme="dark"] .bd-article h3,
+html[data-theme="dark"] .sd-card-title,
+html[data-theme="dark"] .navbar-brand p.title,
+html[data-mode="dark"] .bd-article h1,
+html[data-mode="dark"] .bd-article h2,
+html[data-mode="dark"] .bd-article h3,
+html[data-mode="dark"] .sd-card-title,
+html[data-mode="dark"] .navbar-brand p.title {
+  color: #f5f8fb;
+}
+
+html[data-theme="dark"] .mududb-hero,
+html[data-theme="dark"] .mududb-quickstart,
+html[data-theme="dark"] .mududb-badge,
+html[data-mode="dark"] .mududb-hero,
+html[data-mode="dark"] .mududb-quickstart,
+html[data-mode="dark"] .mududb-badge {
+  background: #17242b;
+  border-color: #40535e;
+}
+
+html[data-theme="dark"] .mududb-hero p,
+html[data-theme="dark"] .sd-card-text,
+html[data-theme="dark"] .mududb-badge,
+html[data-mode="dark"] .mududb-hero p,
+html[data-mode="dark"] .sd-card-text,
+html[data-mode="dark"] .mududb-badge {
+  color: #c6d1d8;
+}

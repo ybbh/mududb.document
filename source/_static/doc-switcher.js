@@ -40,6 +40,46 @@
     return Array.isArray(pages) && pages.includes(pageSuffix);
   }
 
+  function currentThemeMode() {
+    return (
+      document.documentElement.dataset.mode ||
+      document.documentElement.dataset.theme ||
+      localStorage.getItem("mode") ||
+      localStorage.getItem("theme") ||
+      ""
+    );
+  }
+
+  function withThemeMode(url) {
+    const mode = currentThemeMode();
+    if (!mode) {
+      return url;
+    }
+    const target = new URL(url, window.location.href);
+    target.searchParams.set("theme", mode);
+    return target.href;
+  }
+
+  function restoreThemeMode() {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get("theme");
+    if (!mode) {
+      return;
+    }
+
+    localStorage.setItem("mode", mode);
+    localStorage.setItem("theme", mode);
+    document.documentElement.dataset.mode = mode;
+    document.documentElement.dataset.theme = mode;
+
+    params.delete("theme");
+    const cleanQuery = params.toString();
+    const cleanUrl = `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ""}${window.location.hash}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
+  restoreThemeMode();
+
   async function navigateTo(version, language) {
     const announcement = document.querySelector(".mududb-announcement");
     const currentVersion = announcement ? announcement.dataset.currentVersion : "";
@@ -56,9 +96,9 @@
 
     try {
       const manifest = await loadPagesManifest(prefix);
-      window.location.href = pageExists(manifest, version, language, pageSuffix) ? targetUrl : fallbackUrl;
+      window.location.href = withThemeMode(pageExists(manifest, version, language, pageSuffix) ? targetUrl : fallbackUrl);
     } catch (error) {
-      window.location.href = targetUrl;
+      window.location.href = withThemeMode(targetUrl);
     }
   }
 
@@ -75,9 +115,53 @@
     });
   }
 
+  function isModifiedClick(event) {
+    return event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+  }
+
+  function isInternalDocumentLink(link) {
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) {
+      return false;
+    }
+
+    const target = new URL(href, window.location.href);
+    if (target.origin !== window.location.origin) {
+      return false;
+    }
+
+    const pathname = target.pathname;
+    return pathname.endsWith("/") || pathname.endsWith(".html");
+  }
+
+  function bindInternalLinks() {
+    document.addEventListener("click", (event) => {
+      if (isModifiedClick(event)) {
+        return;
+      }
+
+      const link = event.target.closest("a[href]");
+      if (!link || link.target || !isInternalDocumentLink(link)) {
+        return;
+      }
+
+      const mode = currentThemeMode();
+      if (!mode) {
+        return;
+      }
+
+      event.preventDefault();
+      window.location.href = withThemeMode(link.href);
+    });
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bindSwitchers);
+    document.addEventListener("DOMContentLoaded", () => {
+      bindSwitchers();
+      bindInternalLinks();
+    });
   } else {
     bindSwitchers();
+    bindInternalLinks();
   }
 })();

@@ -107,7 +107,7 @@ release-notes/index
 
 This page belongs to the `v0.1` English documentation set. Future database versions should keep separate English documentation under `source/versions/<version>/en`.
 
-- 简体中文: <a href="../zh_CN/">v0.1 简体中文文档</a>
+- 简体中文: <a href="../zh_CN/index.html">v0.1 简体中文文档</a>
 
 ## Recommended Reading Path
 

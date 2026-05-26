@@ -142,7 +142,6 @@ html_theme_options = {
     ],
     "announcement": announcement_html,
     "logo": {
-        "text": "MuduDB",
         "image_light": "_static/mudu_logo.png",
         "image_dark": "_static/mudu_logo.png",
     },

@@ -107,7 +107,7 @@ release-notes/index
 
 当前页面属于 `v0.1` 简体中文文档。后续数据库版本会在 `source/versions/<version>/zh_CN` 下维护自己的中文文档，历史版本不会被新版本覆盖。
 
-- English: <a href="../en/">v0.1 English documentation</a>
+- English: <a href="../en/index.html">v0.1 English documentation</a>
 
 ## 推荐阅读路径
 
