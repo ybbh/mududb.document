@@ -41,7 +41,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish generated HTML
+    name: Publish generated HTML to mududb/docs
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
@@ -60,23 +60,23 @@ jobs:
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ vars.DOCS_DEPLOY_REPOSITORY }}
+          repository: mududb/docs
           ref: ${{ vars.DOCS_DEPLOY_BRANCH || 'main' }}
           ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
           path: publish-repo
 
-      - name: Publish artifact into target directory
-        env:
-          DOCS_DEPLOY_DIR: ${{ vars.DOCS_DEPLOY_DIR || 'mududb/docs' }}
+      - name: Publish artifact to repository root
         run: |
           set -euo pipefail
-          rm -rf "publish-repo/${DOCS_DEPLOY_DIR}"
-          mkdir -p "publish-repo/${DOCS_DEPLOY_DIR}"
-          cp -a build/html/. "publish-repo/${DOCS_DEPLOY_DIR}/"
+          find publish-repo -mindepth 1 \
+            ! -path "publish-repo/.git" \
+            ! -path "publish-repo/.git/*" \
+            -exec rm -rf {} +
+          cp -a build/html/. publish-repo/
           cd publish-repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "${DOCS_DEPLOY_DIR}"
+          git add -A
           if git diff --cached --quiet; then
             echo "No documentation changes to publish."
           else

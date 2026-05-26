@@ -147,14 +147,14 @@ Update `source/versions/versions.json` when adding or retiring maintained versio
 
 The workflow at `.github/workflows/docs.yml` builds the final static HTML and publishes only generated artifacts.
 
+The workflow publishes generated HTML to `https://github.com/mududb/docs`.
+
 Configure these repository variables/secrets in the documentation repository:
 
-- Variable `DOCS_DEPLOY_REPOSITORY`: target GitHub Pages repository, for example `scuptio/scuptio.github.io`.
-- Variable `DOCS_DEPLOY_BRANCH`: target branch, usually `main` or `gh-pages`.
-- Variable `DOCS_DEPLOY_DIR`: directory inside the target repository, for example `mududb/docs`.
+- Variable `DOCS_DEPLOY_BRANCH`: target branch, usually `main` or `gh-pages`. Defaults to `main`.
 - Secret `DOCS_DEPLOY_KEY`: SSH deploy key with write access to the target repository.
 
-The workflow publishes `build/html` into the configured target directory. Source files from this repository are not published.
+The workflow publishes `build/html` into the root of `mududb/docs`. Source files from this repository are not published.
 
 ## Manual Release Checklist
 
