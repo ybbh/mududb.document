@@ -2,9 +2,17 @@ name: Build and Publish Documentation
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      command:
+        description: "Command to run"
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - publish
 
 permissions:
   contents: read
@@ -12,6 +20,10 @@ permissions:
 concurrency:
   group: mududb-documentation
   cancel-in-progress: true
+
+env:
+  TARGET_REPOSITORY: mududb/docs
+  TARGET_MAIN_BRANCH: main
 
 jobs:
   build:
@@ -44,7 +56,7 @@ jobs:
     name: Publish generated HTML to mududb/docs
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'publish' }}
     steps:
       - name: Download static artifact
         uses: actions/download-artifact@v4
@@ -52,34 +64,44 @@ jobs:
           name: mududb-document-html
           path: build/html
 
-      - name: Configure deploy key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DOCS_DEPLOY_KEY }}
-
-      - name: Checkout target repository
-        uses: actions/checkout@v4
-        with:
-          repository: mududb/docs
-          ref: ${{ vars.DOCS_DEPLOY_BRANCH || 'main' }}
-          ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}
-          path: publish-repo
-
       - name: Publish artifact to repository root
+        env:
+          PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
         run: |
           set -euo pipefail
+
+          if [ -z "${PAGES_DEPLOY_TOKEN}" ]; then
+            echo "Missing secret: PAGES_DEPLOY_TOKEN"
+            exit 1
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          remote_url="https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/${TARGET_REPOSITORY}.git"
+
+          if git ls-remote --exit-code --heads "$remote_url" "$TARGET_MAIN_BRANCH" >/dev/null 2>&1; then
+            git clone --depth 1 --branch "$TARGET_MAIN_BRANCH" "$remote_url" publish-repo
+          else
+            git clone --depth 1 "$remote_url" publish-repo
+            cd publish-repo
+            git checkout --orphan "$TARGET_MAIN_BRANCH"
+            git rm -rf . || true
+            cd ..
+          fi
+
           find publish-repo -mindepth 1 \
             ! -path "publish-repo/.git" \
             ! -path "publish-repo/.git/*" \
             -exec rm -rf {} +
           cp -a build/html/. publish-repo/
+          touch publish-repo/.nojekyll
+
           cd publish-repo
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
             echo "No documentation changes to publish."
           else
-            git commit -m "Publish MuduDB documentation"
-            git push origin HEAD:${{ vars.DOCS_DEPLOY_BRANCH || 'main' }}
+            git commit -m "Deploy documentation from @${GITHUB_SHA}"
+            git push origin "$TARGET_MAIN_BRANCH"
           fi

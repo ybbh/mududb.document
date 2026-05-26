@@ -151,10 +151,10 @@ The workflow publishes generated HTML to `https://github.com/mududb/docs`.
 
 Configure these repository variables/secrets in the documentation repository:
 
-- Variable `DOCS_DEPLOY_BRANCH`: target branch, usually `main` or `gh-pages`. Defaults to `main`.
-- Secret `DOCS_DEPLOY_KEY`: SSH deploy key with write access to the target repository.
+- Secret `PAGES_DEPLOY_TOKEN`: GitHub token with write access to `mududb/docs`.
 
 The workflow publishes `build/html` into the root of `mududb/docs`. Source files from this repository are not published.
+Publishing is manual: run the workflow with `command=publish`. Pushes to `main` run the build job only.
 
 ## Manual Release Checklist
 
