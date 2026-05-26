@@ -65,7 +65,7 @@ jobs:
           name: mududb-document-html
           path: build/html
 
-      - name: Publish artifact to repository root
+      - name: Validate deploy token
         env:
           PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
         run: |
@@ -76,20 +76,22 @@ jobs:
             exit 1
           fi
 
+      - name: Checkout publish repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TARGET_REPOSITORY }}
+          ref: ${{ env.TARGET_MAIN_BRANCH }}
+          token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          path: publish-repo
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Publish artifact to docs directory
+        run: |
+          set -euo pipefail
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          remote_url="https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/${TARGET_REPOSITORY}.git"
-
-          if git ls-remote --exit-code --heads "$remote_url" "$TARGET_MAIN_BRANCH" >/dev/null 2>&1; then
-            git clone --depth 1 --branch "$TARGET_MAIN_BRANCH" "$remote_url" publish-repo
-          else
-            git clone --depth 1 "$remote_url" publish-repo
-            cd publish-repo
-            git checkout --orphan "$TARGET_MAIN_BRANCH"
-            git rm -rf . || true
-            cd ..
-          fi
 
           rm -rf "publish-repo/${TARGET_DOCS_DIR}"
           mkdir -p "publish-repo/${TARGET_DOCS_DIR}"

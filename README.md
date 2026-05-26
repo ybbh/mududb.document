@@ -151,7 +151,8 @@ The workflow publishes generated HTML to the `docs` directory in `https://github
 
 Configure these repository variables/secrets in the documentation repository:
 
-- Secret `PAGES_DEPLOY_TOKEN`: GitHub token with write access to `mududb/mududb.github.io`.
+- Secret `PAGES_DEPLOY_TOKEN`: GitHub token with access to `mududb/mududb.github.io`.
+  Fine-grained tokens must include the target repository and `Contents: Read and write`. Classic tokens need `repo` access.
 
 The workflow publishes `build/html` into `docs/` in `mududb/mududb.github.io`. Source files from this repository are not published.
 Publishing is manual: run the workflow with `command=publish`. Pushes to `main` run the build job only.
@@ -162,4 +163,5 @@ Publishing is manual: run the workflow with `command=publish`. Pushes to `main` 
 2. Update `source/versions/versions.json`.
 3. Build locally with `python scripts/build_docs.py`.
 4. Inspect `build/html/index.html` and one language page.
-5. Push to `main`; the workflow builds and deploys the generated HTML.
+5. Push to `main` to run the build check.
+6. Run the workflow manually with `command=publish` to publish generated HTML.
