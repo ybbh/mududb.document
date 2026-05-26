@@ -148,6 +148,13 @@ html_theme_options = {
     },
 }
 
+html_sidebars = {
+    "**": [
+        "search-field.html",
+        "sbt-sidebar-nav.html",
+    ],
+}
+
 html_context = {
     "mududb_versions": versions_config["versions"],
     "mududb_languages": versions_config["languages"],
