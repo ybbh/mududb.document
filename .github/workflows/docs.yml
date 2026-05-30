@@ -1,0 +1,106 @@
+name: Build and Publish Documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Command to run"
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - publish
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mududb-documentation
+  cancel-in-progress: true
+
+env:
+  TARGET_REPOSITORY: mududb/mududb.github.io
+  TARGET_MAIN_BRANCH: main
+  TARGET_DOCS_DIR: docs
+
+jobs:
+  build:
+    name: Build static documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout documentation source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Build all versions and languages
+        run: python scripts/build_docs.py --clean
+
+      - name: Upload static artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mududb-document-html
+          path: build/html
+          if-no-files-found: error
+
+  publish:
+    name: Publish generated HTML to mududb.github.io/docs
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.command == 'publish' }}
+    steps:
+      - name: Download static artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mududb-document-html
+          path: build/html
+
+      - name: Publish artifact to docs directory
+        env:
+          PAGES_DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PAGES_DEPLOY_TOKEN}" ]; then
+            echo "Missing secret: PAGES_DEPLOY_TOKEN"
+            exit 1
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          remote_url="https://x-access-token:${PAGES_DEPLOY_TOKEN}@github.com/${TARGET_REPOSITORY}.git"
+
+          if git ls-remote --exit-code --heads "$remote_url" "$TARGET_MAIN_BRANCH" >/dev/null 2>&1; then
+            git clone --depth 1 --branch "$TARGET_MAIN_BRANCH" "$remote_url" publish-repo
+          else
+            git clone --depth 1 "$remote_url" publish-repo
+            cd publish-repo
+            git checkout --orphan "$TARGET_MAIN_BRANCH"
+            git rm -rf . || true
+            cd ..
+          fi
+
+          rm -rf "publish-repo/${TARGET_DOCS_DIR}"
+          mkdir -p "publish-repo/${TARGET_DOCS_DIR}"
+          cp -a build/html/. "publish-repo/${TARGET_DOCS_DIR}/"
+          touch publish-repo/.nojekyll
+
+          cd publish-repo
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No documentation changes to publish."
+          else
+            git commit -m "Deploy documentation from @${GITHUB_SHA}"
+            git push origin "$TARGET_MAIN_BRANCH"
+          fi
