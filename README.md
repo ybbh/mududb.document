@@ -17,7 +17,7 @@ mududb.document/
         en/
           index.md
           ...
-        zh_CN/
+        zh_cn/
           index.md
           ...
   scripts/
@@ -36,7 +36,7 @@ source/versions/<db-version>/<language>/
 Current starter content:
 
 - `v0.1/en`
-- `v0.1/zh_CN`
+- `v0.1/zh_cn`
 
 Add future database versions by copying an existing version directory, for example:
 
@@ -49,6 +49,35 @@ Then update `source/versions/versions.json`.
 ## Requirements
 
 Use Python 3.10 or newer.
+
+### Virtual Environment Setup
+
+Create and activate a virtual environment before installing dependencies.
+
+**Linux / macOS:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+**Windows (CMD):**
+
+```cmd
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+### Install Dependencies
+
+With the virtual environment activated:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -66,7 +95,7 @@ Build one version and language:
 
 ```bash
 python scripts/build_docs.py --version v0.1 --language en
-python scripts/build_docs.py --version v0.1 --language zh_CN
+python scripts/build_docs.py --version v0.1 --language zh_cn
 ```
 
 Generated HTML is written to:
@@ -134,11 +163,11 @@ Update `source/versions/versions.json` when adding or retiring maintained versio
 ```json
 {
   "default_version": "v0.1",
-  "default_language": "zh_CN",
+  "default_language": "zh_cn",
   "versions": ["v0.1"],
   "languages": {
     "en": "English",
-    "zh_CN": "简体中文"
+    "zh_cn": "简体中文"
   }
 }
 ```
