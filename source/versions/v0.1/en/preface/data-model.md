@@ -1,10 +1,53 @@
 # Data Model
 
-MuduDB documentation should describe both SQL data access and procedure-oriented business logic:
+MuduDB exposes both SQL-style relational data access and procedure-oriented business logic. This page describes the shared data model that underlies both paths.
 
-- tables, primary keys, and indexes
-- procedure input and output types
-- mapping between schema and generated code
-- compatibility changes
+## Tables and primary keys
 
-When data model semantics change, update this page in the corresponding version and record migration impact in the release notes.
+A MuduDB database contains **tables** defined through SQL DDL. Each table has:
+
+- A table name and a logical `table_id`.
+- One or more columns with a declared data type and nullability.
+- A **primary key**, which may be simple or composite.
+
+The primary key determines the physical clustering order and is used for point lookups, range scans, and partition routing.
+
+## Indexes
+
+Currently, the primary key is the main access path. Secondary index support is planned; until then, range scans over the primary key and direct key access are the primary query mechanisms.
+
+## Partitioning keys
+
+Tables can be bound to a global **partition rule**. The partition columns must form a prefix of the primary key. MuduDB uses RANGE partitioning in v0.1: each partition owns a contiguous key interval.
+
+See [Partitioning](../internal/partitioning.md) for the rule, binding, placement, and routing model.
+
+## Procedure input and output types
+
+Mudu Procedures are ordinary functions that operate on MuduDB data. Their input and return types must be representable by the MuduDB datum / tuple conversion system:
+
+- Scalar values: `i32`, `i64`, `String`, `f32`, `f64`, etc.
+- Container values: `Vec<T>`, tuples, and generated `Entity` structs.
+
+The exact supported surface is defined by the current `mudu_type` conversion and transpiler implementation.
+
+## Schema-to-code mapping
+
+The `mgen` tool reads `ddl.sql` and generates Rust `Entity` structs that implement the `Entity` trait. This gives typed query results and parameters:
+
+```rust
+#[derive(Entity)]
+struct Account {
+    id: i64,
+    owner: String,
+    balance: i64,
+}
+```
+
+`mudu_query::<Account>(oid, sql, params)` automatically maps result rows to `Account` instances.
+
+## Compatibility
+
+When data model semantics change (for example, adding a new format version or changing tuple encoding), MuduDB tracks compatibility through versioned contracts. Application code and persisted data should be migrated according to the relevant contract's upgrade and rollback rules.
+
+See the [Format and Protocol Contracts](../reference/contracts/index.md) for details.

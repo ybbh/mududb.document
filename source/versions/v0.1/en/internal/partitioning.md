@@ -52,12 +52,10 @@ Clients obtain topology and resolve partition_oid -> worker_oid, then open sessi
 
 Examples:
 
-.. code-block:: bash
-
-  mcli --http-addr 127.0.0.1:8300 partition-route --rule-name r_orders --key 1001,50001
-  mcli --http-addr 127.0.0.1:8300 server-topology
-
-
+```bash
+mcli --http-addr 127.0.0.1:8300 partition-route --rule-name r_orders --key 1001,50001
+mcli --http-addr 127.0.0.1:8300 server-topology
+```
 
 ## Backend mapping & caching
 

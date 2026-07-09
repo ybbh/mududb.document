@@ -1,41 +1,82 @@
 # Configuration Reference
 
-The default configuration file is `${HOME}/.mududb/mududb_cfg.toml`.
+`mudud` reads its configuration from a TOML file. The file controls listen ports, execution mode, storage paths, and io_uring behavior.
 
-Recommended groups:
+## File location
 
-- network listen addresses
-- storage paths
-- HTTP management port
-- worker and scheduling parameters
-- logging level
+The server loads the first file that exists, in this order:
 
-The exact option schema should follow the configuration structures in the source code for the active version.
+1. The path provided by `--cfg /path/to/mudud.cfg` (or `-c /path/to/mudud.cfg`), if given.
+2. `./mudud.cfg` in the current working directory.
+3. `~/.mududb/mudud.cfg` in the user's home directory.
 
-## Notable configuration fields
+If none of these files exist, `mudud` returns a `NotFound` error. Use `mudud init-cfg` to create a default `./mudud.cfg` before starting the server.
 
-- `tcp_multi_port` (bool): When true and supported by the backend, the server may open one TCP listener per worker to improve accept/affinity and reduce contention. Default: `false`.
+## Generate a default config
 
-- `io_uring_worker_threads` (int): If > 0, the runtime will reserve this number of worker threads for the io_uring backend. If set to `0`, the server derives a sensible default from available CPU cores.
+```bash
+mudud init-cfg
+```
 
-- `io_uring_ring_entries` (int): The depth of the per-worker io_uring submission/completion queue. Larger values may improve throughput at the cost of memory. Default: `1024`.
+## Configuration fields
 
-- `io_uring_accept_multishot`, `io_uring_recv_multishot` (bool): Enable multishot accept/recv for reduced syscall overhead and improved connection throughput. Defaults: `true`.
-
-- `io_uring_enable_fixed_buffers`, `io_uring_enable_fixed_files` (bool): When enabled, the runtime uses pre-registered fixed buffers or files to avoid dynamic allocations and speed up hot I/O paths. These options require additional setup and trade flexibility for performance. Defaults: `false`.
-
-- `io_uring_log_chunk_size` (bytes): Size used for internal io_uring-related chunking or log rotation. Default: 67108864 (64MB).
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `mpk_path` | string | `"./mpk"` | Path to the application package directory. |
+| `db_path` | string | `"./data"` | Path to the database directory. |
+| `listen_ip` | string | `127.0.0.1` | IP address to listen on. |
+| `http_listen_port` | u16 | `8300` | HTTP management API port. |
+| `http_worker_threads` | usize | `1` | HTTP worker thread count. |
+| `pg_listen_port` | u16 | `5432` | PostgreSQL wire protocol port. |
+| `component_target` | string | `p2` | Wasm component ABI target. Allowed: `p2`, `p3`. |
+| `enable_async` | boolean | `true` | Enable the WASI component runtime. |
+| `server_mode` | string | `"IOUring"` | `"Legacy"`, `"IOUring"`, or `"Tokio"`. |
+| `tcp_listen_port` | u16 | `9527` | TCP framed protocol port. |
+| `tcp_multi_port` | boolean | `false` | One TCP listener per worker. |
+| `worker_threads` | usize | `0` | Worker thread count. `0` means use available parallelism. |
+| `io_uring_ring_entries` | u32 | `1024` | io_uring completion queue depth. |
+| `io_uring_accept_multishot` | boolean | `true` | Enable io_uring accept multishot. |
+| `io_uring_recv_multishot` | boolean | `true` | Enable io_uring recv multishot. |
+| `io_uring_enable_fixed_buffers` | boolean | `false` | Enable io_uring fixed buffers. |
+| `io_uring_enable_fixed_files` | boolean | `false` | Enable io_uring fixed files. |
+| `routing_mode` | string | `"ConnectionId"` | `"ConnectionId"`, `"PlayerId"`, or `"RemoteHash"`. |
+| `log_chunk_size` | u64 | `64 * 1024 * 1024` | io_uring log chunk size in bytes. |
+| `page_size` | usize | `4096` | Database page size in bytes. Persistent: changing it for an existing database requires migration or re-initialization. |
 
 ## Server and routing modes
 
-- `server_mode` (enum): Controls backend I/O/runtime path. Possible values:
-  - `Legacy` (0): Traditional blocking I/O path for maximum compatibility.
-  - `IOUring` (1): Use Linux io_uring based kernel path for high-performance async I/O.
-  - `Tokio` (2): Use a Tokio-based async runtime.
+- `server_mode`: controls the backend I/O/runtime path.
+  - `Legacy`: traditional blocking I/O path for maximum compatibility.
+  - `IOUring`: Linux io_uring based high-performance async I/O.
+  - `Tokio`: Tokio-based async runtime.
 
-- `routing_mode` (enum): Controls how requests are routed to workers:
-  - `ConnectionId` (0, default): Route based on connection identifier.
-  - `PlayerId` (1): Route based on an application-level player/user identifier.
-  - `RemoteHash` (2): Hash-based routing using remote address or hashed key.
+- `routing_mode`: controls how requests are routed to workers.
+  - `ConnectionId` (default): route based on connection identifier.
+  - `PlayerId`: route based on an application-level player/user identifier.
+  - `RemoteHash`: hash-based routing using remote address or hashed key.
 
-These fields influence performance and compatibility; prefer `IOUring` or `Tokio` for high-concurrency deployments and `Legacy` for compatibility testing.
+## Example `mudud.cfg`
+
+```toml
+mpk_path = "./mpk"
+db_path = "./data"
+listen_ip = "127.0.0.1"
+http_listen_port = 8300
+http_worker_threads = 1
+pg_listen_port = 5432
+tcp_listen_port = 9527
+server_mode = "Tokio"
+worker_threads = 0
+io_uring_ring_entries = 1024
+io_uring_accept_multishot = true
+io_uring_recv_multishot = true
+io_uring_enable_fixed_buffers = false
+io_uring_enable_fixed_files = false
+routing_mode = "ConnectionId"
+enable_async = true
+tcp_multi_port = false
+log_chunk_size = 67108864
+page_size = 4096
+```
+
+See the [Server Configuration Contract](../reference/contracts/mudud_cfg_v1.md) for compatibility and upgrade rules.
