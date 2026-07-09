@@ -92,7 +92,9 @@ The transpiler rewrites syscall calls into async syscall invocations under the h
 
 ## References & examples
 
-- See `mududb_p/doc/lang.common/*` for syscall semantics (mudu_open, mudu_get, mudu_put, mudu_query, etc.).
+- See the [system call reference](../programming/syscalls.md) for `mudu_open`, `mudu_get`, `mudu_put`, `mudu_query`, `mudu_command`, and more.
+- See [WebAssembly Integration](../internal/wasm.md) for the component model and WASI sandbox.
+- See [Application Packages](../administration/packages.md) for how to build and install an `.mpk` package.
 - See architecture diagrams in the docs (`/_static/procedural_tx.png`) for visual flow between client, kernel, and worker.
 
 
